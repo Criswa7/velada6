@@ -12,6 +12,12 @@ import {
 } from "react";
 import { FIGHTS, getFight } from "./lib/event";
 import {
+  formatWeighIn,
+  getFighterProfile,
+  OFFICIAL_EVENT_URL,
+  WEIGH_IN_SOURCE_URL,
+} from "./lib/fighterProfiles";
+import {
   OutfitVoting,
   type PublicOutfitState,
 } from "./OutfitVoting";
@@ -523,6 +529,65 @@ export function PredictionsApp() {
                       })}
                       <span className="versus">VS</span>
                     </div>
+                    <details className="fight-insight">
+                      <summary>
+                        <span className="insight-mark" aria-hidden="true">
+                          i
+                        </span>
+                        <span className="insight-heading">
+                          <strong>Conoce este combate</strong>
+                          <small>Edad, altura, pesaje y quiénes son</small>
+                        </span>
+                        <span className="insight-toggle" aria-hidden="true">
+                          +
+                        </span>
+                      </summary>
+                      <div className="fighter-profile-grid">
+                        {[fight.fighterA, fight.fighterB].map((fighter) => {
+                          const profile = getFighterProfile(fighter.slug);
+                          if (!profile) return null;
+
+                          return (
+                            <article className="fighter-profile" key={fighter.slug}>
+                              <header>
+                                <span aria-hidden="true">{fighter.flag}</span>
+                                <div>
+                                  <h3>{fighter.name}</h3>
+                                  <p>{profile.role}</p>
+                                </div>
+                              </header>
+                              <dl>
+                                <div>
+                                  <dt>Edad</dt>
+                                  <dd>{profile.age} años</dd>
+                                </div>
+                                <div>
+                                  <dt>Altura</dt>
+                                  <dd>{profile.height}</dd>
+                                </div>
+                                <div>
+                                  <dt>Pesaje</dt>
+                                  <dd
+                                    className={
+                                      profile.weighInKg === null
+                                        ? "is-unconfirmed"
+                                        : undefined
+                                    }
+                                  >
+                                    {formatWeighIn(profile.weighInKg)}
+                                  </dd>
+                                </div>
+                              </dl>
+                              <p className="fighter-bio">{profile.bio}</p>
+                            </article>
+                          );
+                        })}
+                      </div>
+                      <p className="weigh-in-note">
+                        Pesos registrados el 24 JUL. Si la cifra no fue
+                        publicada, lo indicamos.
+                      </p>
+                    </details>
                     {resultName ? (
                       <div className="result-line">Resultado: ganó {resultName}</div>
                     ) : null}
@@ -621,11 +686,19 @@ export function PredictionsApp() {
           <span>PREDICCIONES · MEJOR OUTFIT · VELADA VI</span>
           <a
             className="portrait-credit"
-            href="https://www.infolavelada.com/"
+            href={OFFICIAL_EVENT_URL}
             target="_blank"
             rel="noreferrer"
           >
-            Retratos promocionales oficiales
+            Retratos, edades y alturas · fuente oficial
+          </a>
+          <a
+            className="portrait-credit"
+            href={WEIGH_IN_SOURCE_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Pesaje 24 JUL · LOS40
           </a>
         </div>
         <Link href="/admin">Administrar</Link>

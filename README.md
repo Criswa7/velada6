@@ -12,6 +12,8 @@ del Año VI, seguir la tabla de posiciones y votar por el Mejor Outfit.
   12:45 p. m. de Colombia.
 - Cada acierto vale un punto y el combate estelar vale dos.
 - Las selecciones ajenas no se publican antes del cierre.
+- Cada combate incluye una ficha desplegable con edad, altura, peso del pesaje
+  y un resumen de la trayectoria de ambos participantes.
 - El panel `/admin` permite cerrar o reabrir manualmente, ajustar la hora y
   cargar los resultados.
 - El anfitrión vincula una foto a cada perfil desde el panel y abre la
@@ -36,4 +38,6 @@ para las fotos; el esquema está en `db/schema.ts` y las migraciones generadas
 se guardan en `drizzle/`.
 
 Los retratos promocionales de los participantes proceden de la
-[web oficial de La Velada del Año VI](https://www.infolavelada.com/).
+[web oficial de La Velada del Año VI](https://www.infolavelada.com/), que
+también se usa para contrastar edades y alturas. Los pesos corresponden a la
+[cobertura del pesaje del 24 de julio de LOS40](https://los40.com/2026/07/24/el-pesaje-de-la-velada-del-ano-vi-en-directo-cuanto-pesa-cada-uno-de-los-streamers-y-ultimas-polemicas/).

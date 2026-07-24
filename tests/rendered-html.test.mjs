@@ -19,8 +19,12 @@ test("builds the finished predictions experience", async () => {
 });
 
 test("ships the official ten-fight experience", async () => {
-  const [eventSource, appSource, portraits] = await Promise.all([
+  const [eventSource, profileSource, appSource, portraits] = await Promise.all([
     readFile(new URL("../app/lib/event.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/lib/fighterProfiles.ts", import.meta.url),
+      "utf8",
+    ),
     readFile(new URL("../app/PredictionsApp.tsx", import.meta.url), "utf8"),
     readdir(new URL("../public/fighters/", import.meta.url)),
   ]);
@@ -32,6 +36,15 @@ test("ships the official ten-fight experience", async () => {
   assert.match(appSource, /Elige un ganador/);
   assert.match(appSource, /Tabla de posiciones/);
   assert.match(appSource, /\/fighters\/\$\{fighter\.slug\}\.webp/);
+  assert.match(appSource, /<details className="fight-insight">/);
+  assert.match(appSource, /Edad, altura, pesaje y quiénes son/);
+  assert.match(appSource, /formatWeighIn/);
+  const profileEntries = profileSource.match(
+    /^\s{2}(?:"[a-z0-9-]+"|[a-z][a-z0-9-]*): \{$/gm,
+  );
+  assert.equal(profileEntries?.length, 20);
+  assert.equal(profileSource.match(/weighInKg: null/g)?.length, 2);
+  assert.match(profileSource, /WEIGH_IN_SOURCE_URL/);
   const portraitFiles = portraits.filter((name) => name.endsWith(".webp"));
   assert.equal(portraitFiles.length, 20);
   await Promise.all(
