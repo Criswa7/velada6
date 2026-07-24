@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  type CSSProperties,
   type FormEvent,
   useCallback,
   useEffect,
@@ -393,6 +394,11 @@ export function PredictionsApp() {
                   aria-valuemin={0}
                   aria-valuemax={FIGHTS.length}
                   aria-valuenow={selectedCount}
+                  style={
+                    {
+                      "--progress": `${selectedCount * 10}%`,
+                    } as CSSProperties
+                  }
                 >
                   <strong>{selectedCount}</strong>
                   <span>/10</span>
@@ -435,11 +441,25 @@ export function PredictionsApp() {
                             aria-pressed={selected}
                             disabled={disabled}
                           >
-                            <span className="fighter-flag" aria-hidden="true">
-                              {fighter.flag}
+                            <span className="fighter-portrait" aria-hidden="true">
+                              <span className="fighter-fallback">
+                                {fighter.name.slice(0, 1)}
+                              </span>
+                              <Image
+                                src={`/fighters/${fighter.slug}.webp`}
+                                alt=""
+                                fill
+                                sizes="(max-width: 619px) calc((100vw - 1.5rem) / 2), 350px"
+                                quality={76}
+                              />
                             </span>
-                            <strong>{fighter.name}</strong>
-                            <small>{fighter.country}</small>
+                            <span className="fighter-details">
+                              <span className="fighter-flag" aria-hidden="true">
+                                {fighter.flag}
+                              </span>
+                              <strong>{fighter.name}</strong>
+                              <small>{fighter.country}</small>
+                            </span>
                             <span className="choice-indicator" aria-hidden="true">
                               {selected ? "✓" : ""}
                             </span>
@@ -520,7 +540,17 @@ export function PredictionsApp() {
       </nav>
 
       <footer>
-        <span>PREDICCIONES DE LA VELADA VI</span>
+        <div>
+          <span>PREDICCIONES DE LA VELADA VI</span>
+          <a
+            className="portrait-credit"
+            href="https://www.infolavelada.com/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Retratos promocionales oficiales
+          </a>
+        </div>
         <Link href="/admin">Administrar</Link>
       </footer>
     </div>

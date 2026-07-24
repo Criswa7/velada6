@@ -29,3 +29,6 @@ npm test
 Copia `.env.example` a `.env` y define `ADMIN_PIN` para usar el panel local.
 La app usa Cloudflare D1; el esquema está en `db/schema.ts` y las migraciones
 generadas se guardan en `drizzle/`.
+
+Los retratos promocionales de los participantes proceden de la
+[web oficial de La Velada del Año VI](https://www.infolavelada.com/).
