@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const metadataBase = new URL(`${protocol}://${host}`);
   const title = "Predicciones de la Velada VI";
   const description =
-    "Elige los ganadores de los 10 combates y sigue la clasificación en vivo.";
+    "Elige los ganadores de los 10 combates y vota por el Mejor Outfit de la noche.";
 
   return {
     metadataBase,
@@ -27,15 +27,15 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title,
       description:
-        "Diez combates. Diez decisiones. ¿Quién conoce mejor la cartelera?",
+        "Diez combates, una clasificación en vivo y el Mejor Outfit de la noche.",
       type: "website",
       url: metadataBase,
       images: [
         {
-          url: new URL("/og.png", metadataBase),
-          width: 1800,
-          height: 905,
-          alt: "Predicciones de la Velada VI",
+          url: new URL("/og-outfit.png", metadataBase),
+          width: 1774,
+          height: 887,
+          alt: "Predicciones de la Velada VI y Mejor Outfit",
         },
       ],
     },
@@ -43,8 +43,8 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title,
       description:
-        "Diez combates. Diez decisiones. ¿Quién conoce mejor la cartelera?",
-      images: [new URL("/og.png", metadataBase)],
+        "Diez combates, una clasificación en vivo y el Mejor Outfit de la noche.",
+      images: [new URL("/og-outfit.png", metadataBase)],
     },
   };
 }

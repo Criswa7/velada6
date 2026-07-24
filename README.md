@@ -1,7 +1,7 @@
 # Predicciones de la Velada VI
 
 Aplicación móvil para registrar predicciones de los diez combates de La Velada
-del Año VI y seguir la tabla de posiciones.
+del Año VI, seguir la tabla de posiciones y votar por el Mejor Outfit.
 
 ## Cómo funciona
 
@@ -14,6 +14,10 @@ del Año VI y seguir la tabla de posiciones.
 - Las selecciones ajenas no se publican antes del cierre.
 - El panel `/admin` permite cerrar o reabrir manualmente, ajustar la hora y
   cargar los resultados.
+- El anfitrión vincula una foto a cada perfil desde el panel y abre la
+  votación de Mejor Outfit cuando la galería está completa.
+- Cada persona puede emitir un solo voto secreto y nunca puede elegirse a sí
+  misma. Los resultados se revelan únicamente al cerrar la votación.
 
 ## Desarrollo
 
@@ -26,9 +30,10 @@ npm run build
 npm test
 ```
 
-Copia `.env.example` a `.env` y define `ADMIN_PIN` para usar el panel local.
-La app usa Cloudflare D1; el esquema está en `db/schema.ts` y las migraciones
-generadas se guardan en `drizzle/`.
+Copia `.env.example` a `.env` y define `ADMIN_PIN` y `OUTFIT_VOTE_SECRET` para
+usar el panel y la votación local. La app usa Cloudflare D1 para los datos y R2
+para las fotos; el esquema está en `db/schema.ts` y las migraciones generadas
+se guardan en `drizzle/`.
 
 Los retratos promocionales de los participantes proceden de la
 [web oficial de La Velada del Año VI](https://www.infolavelada.com/).

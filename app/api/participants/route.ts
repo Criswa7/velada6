@@ -3,9 +3,7 @@ import {
   createEditToken,
   ensureSchema,
   getD1,
-  getSettings,
   hashSecret,
-  isLocked,
   normalizeAlias,
 } from "@/app/lib/db";
 
@@ -14,13 +12,6 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     await ensureSchema();
-    if (isLocked(await getSettings())) {
-      return Response.json(
-        { error: "Las predicciones ya están cerradas." },
-        { status: 423 },
-      );
-    }
-
     const payload = (await request.json()) as { alias?: string };
     const alias = cleanAlias(payload.alias ?? "");
     if (alias.length < 2 || alias.length > 24) {

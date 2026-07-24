@@ -1,0 +1,1 @@
+CREATE INDEX `outfit_votes_candidate_idx` ON `outfit_votes` (`candidate_participant_id`);

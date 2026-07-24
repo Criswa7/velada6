@@ -2,6 +2,8 @@ import {
   adminPinIsValid,
   ensureSchema,
   getD1,
+  getOutfitSettings,
+  type OutfitStatus,
 } from "@/app/lib/db";
 import { getFight, winnerIsValid } from "@/app/lib/event";
 import { buildAdminState } from "@/app/lib/state";
@@ -12,7 +14,9 @@ type AdminAction =
   | { action: "setManualLock"; locked?: boolean }
   | { action: "setLockAt"; lockAt?: string }
   | { action: "setResult"; fightId?: number; winnerSlug?: string }
-  | { action: "clearResult"; fightId?: number };
+  | { action: "clearResult"; fightId?: number }
+  | { action: "setOutfitStatus"; status?: OutfitStatus }
+  | { action: "clearOutfitVotes" };
 
 export async function POST(request: Request) {
   if (!adminPinIsValid(request.headers.get("x-admin-pin"))) {
@@ -102,6 +106,94 @@ export async function POST(request: Request) {
         .prepare("DELETE FROM results WHERE fight_id = ?")
         .bind(fightId)
         .run();
+    } else if (payload.action === "setOutfitStatus") {
+      const status = payload.status;
+      if (!status || !["draft", "open", "closed"].includes(status)) {
+        return Response.json(
+          { error: "El estado de Mejor Outfit no es válido." },
+          { status: 400 },
+        );
+      }
+      const current = await getOutfitSettings();
+      if (status === current.status) {
+        return Response.json(await buildAdminState());
+      }
+
+      if (status === "draft") {
+        const voteCount = await getD1()
+          .prepare("SELECT COUNT(*) AS count FROM outfit_votes")
+          .first<{ count: number }>();
+        if (Number(voteCount?.count ?? 0) > 0) {
+          return Response.json(
+            {
+              error:
+                "Borra primero los votos para volver a preparar la galería.",
+            },
+            { status: 409 },
+          );
+        }
+        await getD1()
+          .prepare(
+            "UPDATE outfit_settings SET status = 'draft', opened_at = NULL, closed_at = NULL, updated_at = ? WHERE id = 1",
+          )
+          .bind(now)
+          .run();
+      } else if (status === "open") {
+        if (current.status === "closed") {
+          return Response.json(
+            {
+              error:
+                "Una votación cerrada no se puede reabrir. Borra los votos para iniciar una nueva.",
+            },
+            { status: 409 },
+          );
+        }
+        const photoCount = await getD1()
+          .prepare("SELECT COUNT(*) AS count FROM outfit_photos")
+          .first<{ count: number }>();
+        if (Number(photoCount?.count ?? 0) < 2) {
+          return Response.json(
+            { error: "Sube al menos dos fotos antes de abrir la votación." },
+            { status: 409 },
+          );
+        }
+        await getD1()
+          .prepare(
+            "UPDATE outfit_settings SET status = 'open', opened_at = ?, closed_at = NULL, updated_at = ? WHERE id = 1 AND status = 'draft'",
+          )
+          .bind(now, now)
+          .run();
+      } else {
+        if (current.status !== "open") {
+          return Response.json(
+            { error: "La votación debe estar abierta antes de cerrarla." },
+            { status: 409 },
+          );
+        }
+        await getD1()
+          .prepare(
+            "UPDATE outfit_settings SET status = 'closed', closed_at = ?, updated_at = ? WHERE id = 1 AND status = 'open'",
+          )
+          .bind(now, now)
+          .run();
+      }
+    } else if (payload.action === "clearOutfitVotes") {
+      const current = await getOutfitSettings();
+      if (current.status !== "closed") {
+        return Response.json(
+          { error: "Solo puedes reiniciar una votación después de cerrarla." },
+          { status: 409 },
+        );
+      }
+      const db = getD1();
+      await db.batch([
+        db.prepare("DELETE FROM outfit_votes"),
+        db
+          .prepare(
+            "UPDATE outfit_settings SET status = 'draft', opened_at = NULL, closed_at = NULL, updated_at = ? WHERE id = 1",
+          )
+          .bind(now),
+      ]);
     } else {
       return Response.json({ error: "Acción no reconocida." }, { status: 400 });
     }

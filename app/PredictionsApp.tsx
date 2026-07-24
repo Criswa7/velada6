@@ -11,6 +11,10 @@ import {
   useState,
 } from "react";
 import { FIGHTS, getFight } from "./lib/event";
+import {
+  OutfitVoting,
+  type PublicOutfitState,
+} from "./OutfitVoting";
 
 const STORAGE_KEY = "velada-vi-edit-token";
 
@@ -35,6 +39,7 @@ type PublicState = {
   picks: Record<string, string>;
   results: Record<string, string>;
   standings: Standing[];
+  outfit: PublicOutfitState;
 };
 
 async function responseJson<T>(response: Response): Promise<T> {
@@ -86,7 +91,9 @@ export function PredictionsApp() {
   );
   const [picks, setPicks] = useState<Record<string, string>>({});
   const [alias, setAlias] = useState("");
-  const [activeView, setActiveView] = useState<"picks" | "standings">("picks");
+  const [activeView, setActiveView] = useState<
+    "picks" | "outfit" | "standings"
+  >("picks");
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -198,7 +205,11 @@ export function PredictionsApp() {
       setEditToken(payload.editToken);
       setAlias("");
       await loadState(payload.editToken);
-      setMessage(`Listo, ${payload.participant.alias}. Ya puedes elegir.`);
+      setMessage(
+        activeView === "outfit"
+          ? `Listo, ${payload.participant.alias}. Ya puedes votar cuando se abra la pasarela.`
+          : `Listo, ${payload.participant.alias}. Ya puedes elegir.`,
+      );
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "No fue posible entrar.");
     } finally {
@@ -258,6 +269,43 @@ export function PredictionsApp() {
     );
   }
 
+  const joinCard = (
+    <section className="join-card">
+      <span className="section-number">01</span>
+      <div>
+        <p className="section-label">
+          {activeView === "outfit" ? "TU PASE A LA PASARELA" : "TU ESQUINA"}
+        </p>
+        <h2>
+          {activeView === "outfit"
+            ? "¿Con qué nombre participas?"
+            : "¿Cómo apareces en la tabla?"}
+        </h2>
+        <p>
+          Usa tu nombre o un apodo. Este celular guardará tu acceso privado para
+          tus predicciones y tu voto de outfit.
+        </p>
+      </div>
+      <form onSubmit={join} className="join-form">
+        <label htmlFor="alias">Nombre o apodo</label>
+        <div className="input-row">
+          <input
+            id="alias"
+            value={alias}
+            onChange={(event) => setAlias(event.target.value)}
+            placeholder="Ej. El Zurdo"
+            maxLength={24}
+            autoComplete="nickname"
+            required
+          />
+          <button className="primary-button" disabled={joining}>
+            {joining ? "Entrando…" : "Entrar"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+
   return (
     <div className="app-shell">
       <header className="hero">
@@ -271,23 +319,59 @@ export function PredictionsApp() {
           height={1400}
           priority
         />
-        <h1>Predicciones de la Velada VI</h1>
+        <h1>
+          {activeView === "outfit"
+            ? "Mejor Outfit"
+            : "Predicciones de la Velada VI"}
+        </h1>
         <p className="hero-copy">
-          Diez combates. Diez decisiones. El estelar vale doble.
+          {activeView === "outfit"
+            ? "La mejor pinta de la noche la elige la casa."
+            : "Diez combates. Diez decisiones. El estelar vale doble."}
         </p>
-        <div className={`status-card ${effectiveLocked ? "is-locked" : ""}`}>
-          <div>
-            <span className="status-kicker">
-              {effectiveLocked ? "Predicciones cerradas" : "Cierre de elecciones"}
-            </span>
-            <strong className="countdown">{effectiveLocked ? "BLOQUEADO" : countdown}</strong>
+        {activeView === "outfit" && state ? (
+          <div
+            className={`status-card outfit-hero-status is-${state.outfit.status}`}
+          >
+            <div>
+              <span className="status-kicker">PASARELA DE LA CASA</span>
+              <strong className="countdown">
+                {state.outfit.status === "draft"
+                  ? "PREPARANDO"
+                  : state.outfit.status === "open"
+                    ? "VOTA AHORA"
+                    : "RESULTADO"}
+              </strong>
+            </div>
+            <div className="status-date">
+              <span>{state.outfit.entries.length}</span>
+              <b>LOOKS</b>
+              <small>
+                {state.outfit.status === "open"
+                  ? `${state.outfit.totalVotes} votos`
+                  : "Mejor Outfit"}
+              </small>
+            </div>
           </div>
-          <div className="status-date">
-            <span>{lockMoment.date}</span>
-            <b>{lockMoment.time}</b>
-            <small>hora Colombia</small>
+        ) : (
+          <div className={`status-card ${effectiveLocked ? "is-locked" : ""}`}>
+            <div>
+              <span className="status-kicker">
+                {effectiveLocked
+                  ? "Predicciones cerradas"
+                  : "Cierre de elecciones"}
+              </span>
+              <strong className="countdown">
+                {effectiveLocked ? "BLOQUEADO" : countdown}
+              </strong>
+            </div>
+            <div className="status-date">
+              <span>{lockMoment.date}</span>
+              <b>{lockMoment.time}</b>
+              <small>hora Colombia</small>
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
       <main className="content">
@@ -304,36 +388,7 @@ export function PredictionsApp() {
 
         {activeView === "picks" ? (
           <>
-            {!state?.participant && !effectiveLocked ? (
-              <section className="join-card">
-                <span className="section-number">01</span>
-                <div>
-                  <p className="section-label">TU ESQUINA</p>
-                  <h2>¿Cómo apareces en la tabla?</h2>
-                  <p>
-                    Usa tu nombre o un apodo. Este celular guardará tu acceso
-                    privado para que solo tú puedas editar.
-                  </p>
-                </div>
-                <form onSubmit={join} className="join-form">
-                  <label htmlFor="alias">Nombre o apodo</label>
-                  <div className="input-row">
-                    <input
-                      id="alias"
-                      value={alias}
-                      onChange={(event) => setAlias(event.target.value)}
-                      placeholder="Ej. El Zurdo"
-                      maxLength={24}
-                      autoComplete="nickname"
-                      required
-                    />
-                    <button className="primary-button" disabled={joining}>
-                      {joining ? "Entrando…" : "Entrar"}
-                    </button>
-                  </div>
-                </form>
-              </section>
-            ) : null}
+            {!state?.participant ? joinCard : null}
 
             {state?.participant ? (
               <section className="player-strip">
@@ -480,6 +535,19 @@ export function PredictionsApp() {
               Tus elecciones no se muestran a los demás antes del cierre.
             </p>
           </>
+        ) : activeView === "outfit" && state ? (
+          <OutfitVoting
+            key={`${state.outfit.status}:${state.outfit.myVote ?? "none"}`}
+            outfit={state.outfit}
+            participant={state.participant}
+            editToken={editToken}
+            joinCard={joinCard}
+            onRefresh={async () => {
+              await loadState(editToken);
+            }}
+            onMessage={setMessage}
+            onError={setError}
+          />
         ) : (
           <Leaderboard
             standings={state?.standings ?? []}
@@ -530,6 +598,15 @@ export function PredictionsApp() {
         </button>
         <button
           type="button"
+          className={activeView === "outfit" ? "active" : ""}
+          onClick={() => setActiveView("outfit")}
+          aria-current={activeView === "outfit" ? "page" : undefined}
+        >
+          <span aria-hidden="true">✦</span>
+          Mejor Outfit
+        </button>
+        <button
+          type="button"
           className={activeView === "standings" ? "active" : ""}
           onClick={() => setActiveView("standings")}
           aria-current={activeView === "standings" ? "page" : undefined}
@@ -541,7 +618,7 @@ export function PredictionsApp() {
 
       <footer>
         <div>
-          <span>PREDICCIONES DE LA VELADA VI</span>
+          <span>PREDICCIONES · MEJOR OUTFIT · VELADA VI</span>
           <a
             className="portrait-credit"
             href="https://www.infolavelada.com/"

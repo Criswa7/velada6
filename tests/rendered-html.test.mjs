@@ -10,7 +10,7 @@ test("builds the finished predictions experience", async () => {
   ]);
 
   assert.match(layoutSource, /Predicciones de la Velada VI/i);
-  assert.match(layoutSource, /og\.png/i);
+  assert.match(layoutSource, /og-outfit\.png/i);
   assert.match(appSource, /Preparando la cartelera/i);
   assert.doesNotMatch(
     `${layoutSource}\n${appSource}`,
@@ -32,5 +32,43 @@ test("ships the official ten-fight experience", async () => {
   assert.match(appSource, /Elige un ganador/);
   assert.match(appSource, /Tabla de posiciones/);
   assert.match(appSource, /\/fighters\/\$\{fighter\.slug\}\.webp/);
-  assert.equal(portraits.filter((name) => name.endsWith(".webp")).length, 20);
+  const portraitFiles = portraits.filter((name) => name.endsWith(".webp"));
+  assert.equal(portraitFiles.length, 20);
+  await Promise.all(
+    portraitFiles.map(async (name) => {
+      const bytes = await readFile(
+        new URL(`../public/fighters/${name}`, import.meta.url),
+      );
+      assert.equal(bytes.subarray(0, 4).toString("ascii"), "RIFF");
+      assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP");
+      assert.ok(bytes.length > 1_000);
+    }),
+  );
+});
+
+test("includes the secret Mejor Outfit voting flow", async () => {
+  const [appSource, outfitSource, adminSource, schemaSource, voteRoute, css] =
+    await Promise.all([
+      readFile(new URL("../app/PredictionsApp.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/OutfitVoting.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/admin/OutfitAdmin.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
+      readFile(
+        new URL("../app/api/outfit/vote/route.ts", import.meta.url),
+        "utf8",
+      ),
+      readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    ]);
+
+  assert.match(appSource, /Mejor Outfit/);
+  assert.match(appSource, /activeView === "outfit"/);
+  assert.match(outfitSource, /TU OUTFIT · NO ELEGIBLE/);
+  assert.match(outfitSource, /candidateParticipantId/);
+  assert.match(adminSource, /Abrir votación/);
+  assert.match(adminSource, /capture="environment"/);
+  assert.match(schemaSource, /outfit/i);
+  assert.match(voteRoute, /candidateParticipantId/);
+  assert.match(voteRoute, /participant/i);
+  assert.match(css, /\.event-logo\s*\{[^}]*height:\s*auto/s);
+  assert.doesNotMatch(css, /\.event-logo\s*\{[^}]*object-fit:\s*fill/s);
 });

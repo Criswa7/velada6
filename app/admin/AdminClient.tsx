@@ -4,6 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import type { Fight } from "../lib/event";
+import {
+  OutfitAdmin,
+  type AdminOutfitState,
+} from "./OutfitAdmin";
 
 const ADMIN_STORAGE_KEY = "velada-vi-admin-pin";
 
@@ -24,6 +28,7 @@ type AdminState = {
     correct: number;
     savedCount: number;
   }>;
+  outfit: AdminOutfitState;
 };
 
 function localInputValue(iso: string): string {
@@ -262,6 +267,18 @@ export function AdminClient() {
           </small>
         </article>
       </section>
+
+      <OutfitAdmin
+        outfit={data.outfit}
+        participants={data.participants}
+        pin={pin}
+        onRefresh={async () => {
+          await load(pin);
+        }}
+        onAction={act}
+        onMessage={setMessage}
+        onError={setError}
+      />
 
       <section className="admin-section">
         <div className="admin-section-heading">

@@ -1,4 +1,10 @@
-import { integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 export const participants = sqliteTable(
   "participants",
@@ -46,3 +52,42 @@ export const eventSettings = sqliteTable("event_settings", {
   manualLocked: integer("manual_locked").notNull().default(0),
   updatedAt: text("updated_at").notNull(),
 });
+
+export const outfitSettings = sqliteTable("outfit_settings", {
+  id: integer("id").primaryKey(),
+  status: text("status", { enum: ["draft", "open", "closed"] })
+    .notNull()
+    .default("draft"),
+  openedAt: text("opened_at"),
+  closedAt: text("closed_at"),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const outfitPhotos = sqliteTable(
+  "outfit_photos",
+  {
+    participantId: text("participant_id")
+      .primaryKey()
+      .references(() => participants.id, { onDelete: "cascade" }),
+    storageKey: text("storage_key").notNull(),
+    contentType: text("content_type").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("outfit_photos_storage_key_idx").on(table.storageKey),
+  ],
+);
+
+export const outfitVotes = sqliteTable(
+  "outfit_votes",
+  {
+    voterKey: text("voter_key").primaryKey(),
+    candidateParticipantId: text("candidate_participant_id")
+      .notNull()
+      .references(() => outfitPhotos.participantId, { onDelete: "cascade" }),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("outfit_votes_candidate_idx").on(table.candidateParticipantId),
+  ],
+);

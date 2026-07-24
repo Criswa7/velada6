@@ -198,8 +198,10 @@ a:focus-visible {
 }
 
 .event-logo {
-  width: clamp(10.5rem, 48vw, 14.5rem);
-  margin: -0.25rem auto -1rem;
+  width: clamp(7rem, 30vw, 9.25rem);
+  height: auto;
+  margin: -0.1rem auto -0.35rem;
+  object-fit: contain;
   filter:
     drop-shadow(0 18px 24px rgba(0, 0, 0, 0.52))
     drop-shadow(0 0 18px rgba(205, 133, 85, 0.14));
@@ -1021,7 +1023,8 @@ input:focus {
   content: "◇";
 }
 
-.save-dock {
+.save-dock,
+.outfit-vote-dock {
   position: fixed;
   z-index: 30;
   right: 0.75rem;
@@ -1044,11 +1047,13 @@ input:focus {
   backdrop-filter: blur(24px);
 }
 
-.save-dock > div {
+.save-dock > div,
+.outfit-vote-dock > div {
   min-width: 0;
 }
 
-.save-dock > div > span {
+.save-dock > div > span,
+.outfit-vote-dock > div > span {
   display: block;
   overflow: hidden;
   color: var(--cream-soft);
@@ -1087,7 +1092,7 @@ input:focus {
   bottom: 0;
   left: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   padding: 0.42rem max(0.8rem, env(safe-area-inset-right))
     max(0.42rem, env(safe-area-inset-bottom))
     max(0.8rem, env(safe-area-inset-left));
@@ -1170,6 +1175,407 @@ footer .portrait-credit {
   padding: 0.2rem 0;
   color: #777e84;
   letter-spacing: 0.02em;
+}
+
+/* Mejor Outfit */
+.outfit-hero-status.is-open {
+  border-color: rgba(131, 182, 155, 0.48);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.06),
+    0 20px 55px rgba(74, 139, 105, 0.13);
+}
+
+.outfit-view {
+  min-height: 36rem;
+}
+
+.outfit-intro {
+  position: relative;
+  padding: 1.3rem 0.35rem 1.2rem;
+  text-align: center;
+}
+
+.outfit-intro::before {
+  position: absolute;
+  z-index: -1;
+  top: -1rem;
+  left: 50%;
+  width: 19rem;
+  height: 11rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    rgba(189, 117, 82, 0.13),
+    transparent 70%
+  );
+  content: "";
+  transform: translateX(-50%);
+}
+
+.outfit-stage {
+  display: inline-flex;
+  min-height: 1.75rem;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  padding: 0.32rem 0.7rem;
+  border: 1px solid rgba(213, 180, 123, 0.28);
+  border-radius: 999px;
+  background: rgba(213, 180, 123, 0.07);
+  color: var(--gold);
+  font-size: 0.55rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+}
+
+.outfit-stage.is-open {
+  border-color: rgba(131, 182, 155, 0.38);
+  background: rgba(75, 139, 105, 0.1);
+  color: #a8d2ba;
+}
+
+.outfit-stage.is-open::before {
+  width: 0.42rem;
+  height: 0.42rem;
+  margin-right: 0.42rem;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 0.22rem rgba(131, 182, 155, 0.09);
+  content: "";
+}
+
+.outfit-stage.is-closed {
+  color: var(--silver);
+}
+
+.outfit-intro .section-label {
+  margin-bottom: 0.35rem;
+}
+
+.outfit-intro h2 {
+  margin-bottom: 0.45rem;
+  color: var(--cream);
+  font-family: var(--display);
+  font-size: clamp(2rem, 10vw, 3.15rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.outfit-intro > p:last-child,
+.outfit-intro > p:nth-last-child(2) {
+  max-width: 31rem;
+  margin-right: auto;
+  margin-left: auto;
+  color: var(--cream-soft);
+  font-size: 0.82rem;
+}
+
+.outfit-prep-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: rgba(8, 14, 22, 0.65);
+}
+
+.outfit-prep-count strong {
+  color: var(--copper-light);
+  font-family: var(--display);
+  font-size: 1.55rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.outfit-prep-count span {
+  color: var(--silver-muted);
+  font-size: 0.65rem;
+}
+
+.outfit-ready-note {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid rgba(131, 182, 155, 0.25);
+  border-radius: 0.9rem;
+  background: rgba(75, 139, 105, 0.07);
+}
+
+.outfit-ready-note > span {
+  display: grid;
+  width: 2.4rem;
+  height: 2.4rem;
+  place-items: center;
+  border: 1px solid rgba(131, 182, 155, 0.38);
+  border-radius: 50%;
+  color: var(--success);
+}
+
+.outfit-ready-note strong {
+  display: block;
+  color: var(--cream);
+  font-size: 0.78rem;
+}
+
+.outfit-ready-note p {
+  margin: 0.15rem 0 0;
+  color: var(--silver-muted);
+  font-size: 0.68rem;
+}
+
+.outfit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.62rem;
+}
+
+.outfit-card {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 4 / 5;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(220, 196, 158, 0.16);
+  border-radius: 1rem;
+  background: var(--navy);
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.3);
+  text-align: left;
+  transition:
+    border-color 170ms ease,
+    box-shadow 170ms ease,
+    transform 170ms ease;
+}
+
+.outfit-card > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition:
+    filter 170ms ease,
+    transform 260ms ease;
+}
+
+.outfit-card-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, transparent 43%, rgba(3, 6, 10, 0.22) 61%, rgba(3, 6, 10, 0.94)),
+    linear-gradient(135deg, rgba(206, 143, 92, 0.07), transparent 40%);
+}
+
+.outfit-card-copy {
+  position: absolute;
+  z-index: 2;
+  right: 0.75rem;
+  bottom: 0.72rem;
+  left: 0.75rem;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.outfit-card-copy small {
+  margin-bottom: 0.18rem;
+  color: var(--copper-light);
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.outfit-card-copy strong {
+  overflow: hidden;
+  color: #fff8ec;
+  font-family: var(--display);
+  font-size: clamp(1rem, 5vw, 1.4rem);
+  font-weight: 500;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.72);
+  white-space: nowrap;
+}
+
+.outfit-check {
+  position: absolute;
+  z-index: 3;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: grid;
+  width: 1.7rem;
+  height: 1.7rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  background: rgba(5, 9, 14, 0.58);
+  color: white;
+  font-size: 0.82rem;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(10px);
+}
+
+.outfit-card.selected {
+  border-color: var(--copper-light);
+  box-shadow:
+    inset 0 0 0 2px rgba(225, 162, 118, 0.75),
+    0 18px 42px rgba(133, 65, 41, 0.34);
+  transform: translateY(-2px);
+}
+
+.outfit-card.selected .outfit-check {
+  border-color: var(--copper-light);
+  background: linear-gradient(145deg, var(--copper-light), var(--copper-deep));
+}
+
+.outfit-card.is-self {
+  cursor: not-allowed;
+}
+
+.outfit-card.is-self > img {
+  filter: grayscale(0.78) brightness(0.62);
+}
+
+.outfit-card.is-self .outfit-card-shade {
+  background: linear-gradient(180deg, rgba(5, 9, 14, 0.17), rgba(5, 9, 14, 0.94));
+}
+
+.outfit-card.is-self .outfit-check {
+  display: none;
+}
+
+.outfit-vote-dock {
+  bottom: calc(4.95rem + env(safe-area-inset-bottom));
+}
+
+.outfit-vote-dock > div > small {
+  display: block;
+  margin-top: 0.12rem;
+  overflow: hidden;
+  color: var(--silver-muted);
+  font-size: 0.54rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outfit-vote-dock .save-button {
+  min-width: 8.5rem;
+  font-size: 0.68rem;
+}
+
+.outfit-privacy {
+  margin: 1.1rem auto 0;
+  color: var(--silver-muted);
+  font-size: 0.68rem;
+  text-align: center;
+}
+
+.outfit-winner {
+  position: relative;
+  width: min(100%, 30rem);
+  aspect-ratio: 4 / 5;
+  margin: 0 auto 0.8rem;
+  overflow: hidden;
+  border: 1px solid rgba(213, 180, 123, 0.43);
+  border-radius: 1.1rem;
+  background: var(--navy);
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.46),
+    0 0 55px rgba(189, 117, 82, 0.1);
+}
+
+.outfit-winner > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.outfit-winner::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(3, 6, 10, 0.96));
+  content: "";
+}
+
+.outfit-winner > div {
+  position: absolute;
+  z-index: 2;
+  right: 1.2rem;
+  bottom: 1.15rem;
+  left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.outfit-winner span {
+  color: var(--copper-light);
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+}
+
+.outfit-winner strong {
+  color: white;
+  font-family: var(--display);
+  font-size: clamp(2rem, 10vw, 3.4rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.outfit-winner small {
+  margin-top: 0.2rem;
+  color: var(--cream-soft);
+  font-size: 0.7rem;
+}
+
+.outfit-results {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: rgba(8, 14, 22, 0.82);
+}
+
+.outfit-results article {
+  display: grid;
+  grid-template-columns: 2.5rem 2.6rem minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 3.9rem;
+  padding: 0.45rem 0.7rem;
+  gap: 0.55rem;
+}
+
+.outfit-results article + article {
+  border-top: 1px solid rgba(220, 196, 158, 0.1);
+}
+
+.outfit-result-rank {
+  color: var(--gold);
+  font-family: var(--display);
+  font-size: 0.95rem;
+}
+
+.outfit-results img {
+  width: 2.6rem;
+  height: 3.1rem;
+  border-radius: 0.38rem;
+  object-fit: cover;
+}
+
+.outfit-results strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--cream);
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outfit-results article > span {
+  color: var(--copper-light);
+  font-size: 0.68rem;
+  font-weight: 800;
 }
 
 /* Leaderboard */
@@ -1471,8 +1877,10 @@ footer .portrait-credit {
 }
 
 .admin-login img {
-  width: 8rem;
-  margin: -1rem auto -0.55rem;
+  width: 6.5rem;
+  height: auto;
+  margin: -0.5rem auto -0.2rem;
+  object-fit: contain;
   filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.42));
 }
 
@@ -1765,6 +2173,253 @@ footer .portrait-credit {
   text-align: center;
 }
 
+.outfit-admin-heading {
+  align-items: center;
+}
+
+.admin-outfit-status {
+  display: inline-flex;
+  min-height: 1.8rem;
+  align-items: center;
+  padding: 0.3rem 0.58rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--gold);
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.admin-outfit-status.is-open {
+  border-color: rgba(131, 182, 155, 0.36);
+  background: rgba(75, 139, 105, 0.08);
+  color: #a8d2ba;
+}
+
+.admin-outfit-status.is-closed {
+  color: var(--silver);
+}
+
+.outfit-admin-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.outfit-admin-summary article {
+  display: flex;
+  min-height: 6.8rem;
+  flex-direction: column;
+  padding: 0.8rem;
+  border: 1px solid rgba(220, 196, 158, 0.12);
+  border-radius: 0.75rem;
+  background: rgba(2, 7, 12, 0.32);
+}
+
+.outfit-admin-summary span {
+  color: var(--silver-muted);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.outfit-admin-summary strong {
+  margin: 0.28rem 0 auto;
+  color: var(--cream);
+  font-family: var(--display);
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.outfit-admin-summary small {
+  color: var(--silver-muted);
+  font-size: 0.6rem;
+}
+
+.outfit-admin-actions {
+  margin-top: 0.65rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(189, 117, 82, 0.23);
+  border-radius: 0.75rem;
+  background: rgba(189, 117, 82, 0.055);
+}
+
+.outfit-admin-actions p {
+  margin: 0 0 0.7rem;
+  color: var(--cream-soft);
+  font-size: 0.7rem;
+}
+
+.outfit-admin-actions > button {
+  width: 100%;
+  min-height: 2.75rem;
+}
+
+.outfit-admin-actions > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.outfit-admin-actions > div button {
+  min-height: 2.75rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.62rem;
+}
+
+.admin-outfit-results {
+  margin-top: 0.65rem;
+  overflow: hidden;
+  border: 1px solid rgba(213, 180, 123, 0.2);
+  border-radius: 0.75rem;
+}
+
+.admin-outfit-results > div {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 2.8rem;
+  padding: 0.45rem 0.7rem;
+  gap: 0.45rem;
+}
+
+.admin-outfit-results > div + div {
+  border-top: 1px solid rgba(220, 196, 158, 0.09);
+}
+
+.admin-outfit-results b {
+  color: var(--gold);
+  font-family: var(--display);
+}
+
+.admin-outfit-results strong {
+  overflow: hidden;
+  color: var(--cream);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-outfit-results span {
+  color: var(--copper-light);
+  font-size: 0.64rem;
+}
+
+.outfit-photo-list {
+  display: grid;
+  gap: 0.48rem;
+  margin-top: 0.75rem;
+}
+
+.outfit-photo-list > article {
+  display: grid;
+  grid-template-columns: 3.15rem minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 4.8rem;
+  padding: 0.45rem;
+  gap: 0.65rem;
+  border: 1px solid rgba(220, 196, 158, 0.12);
+  border-radius: 0.72rem;
+  background: rgba(2, 7, 12, 0.3);
+}
+
+.outfit-photo-preview {
+  display: grid;
+  width: 3.15rem;
+  height: 3.95rem;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(145deg, rgba(189, 117, 82, 0.09), transparent),
+    var(--navy);
+}
+
+.outfit-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.outfit-photo-preview span {
+  color: var(--copper-light);
+  font-family: var(--display);
+  font-size: 1.25rem;
+}
+
+.outfit-photo-list > article > div:nth-child(2) {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.outfit-photo-list > article > div:nth-child(2) strong {
+  overflow: hidden;
+  color: var(--cream);
+  font-size: 0.73rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outfit-photo-list > article > div:nth-child(2) small {
+  color: var(--silver-muted);
+  font-size: 0.58rem;
+}
+
+.outfit-photo-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.outfit-photo-controls label,
+.outfit-photo-controls button {
+  display: inline-flex;
+  min-height: 2.55rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.65rem;
+  border-radius: 0.55rem;
+  font-size: 0.6rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.outfit-photo-controls label:focus-within {
+  outline: 2px solid var(--copper-light);
+  outline-offset: 2px;
+}
+
+.outfit-photo-controls input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.outfit-photo-locked {
+  color: var(--silver-muted);
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.outfit-admin-empty {
+  padding: 1.4rem 0.8rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.75rem;
+  color: var(--silver-muted);
+  font-size: 0.68rem;
+  text-align: center;
+}
+
 /* Loading */
 .loading-screen {
   display: grid;
@@ -1874,7 +2529,8 @@ footer .portrait-credit {
     transform: translateX(50%);
   }
 
-  .save-dock {
+  .save-dock,
+  .outfit-vote-dock {
     right: 50%;
     left: auto;
     transform: translateX(50%);
@@ -1942,6 +2598,41 @@ footer .portrait-credit {
   .hero {
     padding-right: 0.9rem;
     padding-left: 0.9rem;
+  }
+
+  .event-logo {
+    width: clamp(6.75rem, 28vw, 7.5rem);
+  }
+
+  .bottom-nav button {
+    font-size: 0.58rem;
+    letter-spacing: 0.02em;
+  }
+
+  .outfit-grid {
+    gap: 0.5rem;
+  }
+
+  .outfit-card-copy {
+    right: 0.58rem;
+    bottom: 0.58rem;
+    left: 0.58rem;
+  }
+
+  .outfit-vote-dock {
+    grid-template-columns: minmax(0, 1fr) 7.35rem;
+    gap: 0.45rem;
+    padding-left: 0.68rem;
+  }
+
+  .outfit-vote-dock > div > small {
+    display: none;
+  }
+
+  .outfit-vote-dock .save-button {
+    min-width: 0;
+    padding: 0 0.58rem;
+    font-size: 0.6rem;
   }
 
   .eyebrow::before,
@@ -2014,6 +2705,30 @@ footer .portrait-credit {
 
   .admin-inline-form label {
     grid-column: auto;
+  }
+
+  .outfit-admin-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .outfit-admin-actions > div {
+    grid-template-columns: 1fr;
+  }
+
+  .outfit-photo-list > article {
+    grid-template-columns: 3.15rem minmax(0, 1fr);
+  }
+
+  .outfit-photo-controls,
+  .outfit-photo-locked {
+    grid-column: 1 / -1;
+  }
+
+  .outfit-photo-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .admin-participants > div {
