@@ -41,3 +41,46 @@ Los retratos promocionales de los participantes proceden de la
 [web oficial de La Velada del Año VI](https://www.infolavelada.com/), que
 también se usa para contrastar edades y alturas. Los pesos corresponden a la
 [cobertura del pesaje del 24 de julio de LOS40](https://los40.com/2026/07/24/el-pesaje-de-la-velada-del-ano-vi-en-directo-cuanto-pesa-cada-uno-de-los-streamers-y-ultimas-polemicas/).
+
+## Publicación directa en Cloudflare Workers
+
+La configuración versionada está en `wrangler.jsonc.example`. El archivo real
+`wrangler.jsonc` se genera localmente y queda ignorado por Git para evitar
+subir por accidente identificadores de la cuenta.
+
+1. Inicia sesión y crea los recursos:
+
+   ```bash
+   npx wrangler login
+   npx wrangler d1 create predicciones-velada-vi
+   npx wrangler r2 bucket create predicciones-velada-vi-outfit-photos
+   ```
+
+2. Copia el UUID real que devuelve D1 y genera la configuración:
+
+   ```bash
+   npm run cf:config -- --database-id <UUID_REAL_DE_D1>
+   ```
+
+   Si se usan otros nombres, añade `--database-name <nombre>` y
+   `--bucket-name <nombre>`.
+
+3. Aplica el esquema y comprueba el paquete sin publicarlo:
+
+   ```bash
+   npx wrangler d1 migrations apply predicciones-velada-vi --remote --config wrangler.jsonc
+   npm run cf:check
+   ```
+
+4. Publica y carga los dos secretos; Wrangler pide cada valor sin guardarlo en
+   el repositorio:
+
+   ```bash
+   npm run cf:deploy
+   npx wrangler secret put ADMIN_PIN --config wrangler.jsonc
+   npx wrangler secret put OUTFIT_VOTE_SECRET --config wrangler.jsonc
+   ```
+
+El Worker queda disponible en el dominio público `*.workers.dev`. Los archivos
+estáticos y retratos se sirven mediante `ASSETS`, los datos mediante `DB` (D1)
+y las fotos de outfits mediante `OUTFIT_PHOTOS` (R2).
