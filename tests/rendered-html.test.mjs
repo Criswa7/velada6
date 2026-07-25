@@ -6,7 +6,7 @@ test("builds the finished predictions experience", async () => {
   const [layoutSource, appSource] = await Promise.all([
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/PredictionsApp.tsx", import.meta.url), "utf8"),
-    access(new URL("../dist/server/index.js", import.meta.url)),
+    access(new URL("../.next/BUILD_ID", import.meta.url)),
   ]);
 
   assert.match(layoutSource, /Predicciones de la Velada VI/i);

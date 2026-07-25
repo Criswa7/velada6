@@ -1,16 +1,14 @@
 import {
+  AppStateError,
   adminPinIsValid,
-  ensureSchema,
-  getD1,
-  getOutfitPhotosBucket,
-  getOutfitSettings,
-  type OutfitPhotoRow,
+  deleteOutfitPhoto,
+  putOutfitPhoto,
 } from "@/app/lib/db";
 import { buildAdminState } from "@/app/lib/state";
 
 export const dynamic = "force-dynamic";
 
-const MAX_PHOTO_BYTES = 12 * 1024 * 1024;
+const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 const EXTENSION_BY_TYPE = new Map([
   ["image/jpeg", "jpg"],
   ["image/png", "png"],
@@ -52,27 +50,24 @@ function checkAdmin(request: Request): Response | null {
   return Response.json({ error: "Código incorrecto." }, { status: 401 });
 }
 
+function storageError(error: unknown, fallback: string): Response {
+  if (error instanceof AppStateError) {
+    return Response.json({ error: error.message }, { status: error.status });
+  }
+  const message = error instanceof Error ? error.message : fallback;
+  return Response.json({ error: message }, { status: 500 });
+}
+
 export async function POST(request: Request) {
   const unauthorized = checkAdmin(request);
   if (unauthorized) return unauthorized;
 
-  let newStorageKey: string | null = null;
   try {
-    await ensureSchema();
-    if ((await getOutfitSettings()).status !== "draft") {
-      return Response.json(
-        { error: "Las fotos solo se pueden cambiar antes de abrir la votación." },
-        { status: 409 },
-      );
-    }
-
     const formData = await request.formData();
     const participantIdValue = formData.get("participantId");
     const fileValue = formData.get("photo");
     const participantId =
-      typeof participantIdValue === "string"
-        ? participantIdValue.trim()
-        : "";
+      typeof participantIdValue === "string" ? participantIdValue.trim() : "";
     if (!participantId || participantId.length > 64) {
       return Response.json(
         { error: "Selecciona un participante válido." },
@@ -87,7 +82,7 @@ export async function POST(request: Request) {
     }
     if (fileValue.size > MAX_PHOTO_BYTES) {
       return Response.json(
-        { error: "La foto debe pesar máximo 12 MB." },
+        { error: "La foto procesada debe pesar máximo 4 MB." },
         { status: 413 },
       );
     }
@@ -108,73 +103,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const participant = await getD1()
-      .prepare("SELECT id FROM participants WHERE id = ?")
-      .bind(participantId)
-      .first<{ id: string }>();
-    if (!participant) {
-      return Response.json(
-        { error: "Ese participante no existe." },
-        { status: 404 },
-      );
-    }
-    const previousPhoto = await getD1()
-      .prepare(
-        "SELECT participant_id, storage_key, content_type, updated_at FROM outfit_photos WHERE participant_id = ?",
-      )
-      .bind(participantId)
-      .first<OutfitPhotoRow>();
-
-    const now = new Date().toISOString();
-    newStorageKey = `outfit/${participantId}/${crypto.randomUUID()}.${extension}`;
-    const bucket = getOutfitPhotosBucket();
-    await bucket.put(newStorageKey, photoBuffer, {
-      httpMetadata: { contentType },
-    });
-
-    const result = await getD1()
-      .prepare(
-        `INSERT INTO outfit_photos
-          (participant_id, storage_key, content_type, updated_at)
-         SELECT ?, ?, ?, ?
-         WHERE EXISTS (
-           SELECT 1 FROM outfit_settings WHERE id = 1 AND status = 'draft'
-         )
-         ON CONFLICT(participant_id) DO UPDATE SET
-           storage_key = excluded.storage_key,
-           content_type = excluded.content_type,
-           updated_at = excluded.updated_at`,
-      )
-      .bind(participantId, newStorageKey, contentType, now)
-      .run();
-    if (Number(result.meta.changes ?? 0) === 0) {
-      await bucket.delete(newStorageKey);
-      newStorageKey = null;
-      return Response.json(
-        { error: "La votación acaba de abrir; la foto no fue cambiada." },
-        { status: 409 },
-      );
-    }
-
-    if (
-      previousPhoto?.storage_key &&
-      previousPhoto.storage_key !== newStorageKey
-    ) {
-      await bucket.delete(previousPhoto.storage_key).catch(() => undefined);
-    }
-    newStorageKey = null;
+    await putOutfitPhoto(
+      participantId,
+      photoBuffer,
+      contentType,
+      extension,
+    );
     return Response.json(await buildAdminState());
   } catch (error) {
-    if (newStorageKey) {
-      try {
-        await getOutfitPhotosBucket().delete(newStorageKey);
-      } catch {
-        // The metadata was not committed, so an unavailable bucket is safe here.
-      }
-    }
-    const message =
-      error instanceof Error ? error.message : "No fue posible guardar la foto.";
-    return Response.json({ error: message }, { status: 500 });
+    return storageError(error, "No fue posible guardar la foto.");
   }
 }
 
@@ -183,13 +120,6 @@ export async function DELETE(request: Request) {
   if (unauthorized) return unauthorized;
 
   try {
-    await ensureSchema();
-    if ((await getOutfitSettings()).status !== "draft") {
-      return Response.json(
-        { error: "Las fotos solo se pueden eliminar antes de abrir la votación." },
-        { status: 409 },
-      );
-    }
     const queryParticipantId = new URL(request.url).searchParams.get(
       "participantId",
     );
@@ -208,42 +138,9 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const photo = await getD1()
-      .prepare(
-        "SELECT participant_id, storage_key, content_type, updated_at FROM outfit_photos WHERE participant_id = ?",
-      )
-      .bind(participantId)
-      .first<OutfitPhotoRow>();
-    if (!photo) {
-      return Response.json(
-        { error: "Ese participante no tiene una foto." },
-        { status: 404 },
-      );
-    }
-
-    const result = await getD1()
-      .prepare(
-        `DELETE FROM outfit_photos
-         WHERE participant_id = ?
-           AND EXISTS (
-             SELECT 1 FROM outfit_settings WHERE id = 1 AND status = 'draft'
-           )`,
-      )
-      .bind(participantId)
-      .run();
-    if (Number(result.meta.changes ?? 0) === 0) {
-      return Response.json(
-        { error: "La votación acaba de abrir; la foto no fue eliminada." },
-        { status: 409 },
-      );
-    }
-    await getOutfitPhotosBucket()
-      .delete(photo.storage_key)
-      .catch(() => undefined);
+    await deleteOutfitPhoto(participantId);
     return Response.json(await buildAdminState());
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "No fue posible eliminar la foto.";
-    return Response.json({ error: message }, { status: 500 });
+    return storageError(error, "No fue posible eliminar la foto.");
   }
 }

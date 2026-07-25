@@ -26,61 +26,40 @@ del Año VI, seguir la tabla de posiciones y votar por el Mejor Outfit.
 Requiere Node.js 22.13 o superior.
 
 ```bash
-npm install
+npm ci
 npm run dev
-npm run build
-npm test
+npm run check
 ```
 
 Copia `.env.example` a `.env` y define `ADMIN_PIN` y `OUTFIT_VOTE_SECRET` para
-usar el panel y la votación local. La app usa Cloudflare D1 para los datos y R2
-para las fotos; el esquema está en `db/schema.ts` y las migraciones generadas
-se guardan en `drizzle/`.
+usar el panel y la votación local. En producción, los datos y las fotos se
+guardan en almacenes persistentes de Netlify Blobs. Para probar esa persistencia
+localmente, vincula primero el proyecto con Netlify y ejecuta `npx netlify dev`.
 
 Los retratos promocionales de los participantes proceden de la
 [web oficial de La Velada del Año VI](https://www.infolavelada.com/), que
 también se usa para contrastar edades y alturas. Los pesos corresponden a la
 [cobertura del pesaje del 24 de julio de LOS40](https://los40.com/2026/07/24/el-pesaje-de-la-velada-del-ano-vi-en-directo-cuanto-pesa-cada-uno-de-los-streamers-y-ultimas-polemicas/).
 
-## Publicación directa en Cloudflare Workers
+## Publicación en Netlify
 
-La configuración versionada está en `wrangler.jsonc.example`. El archivo real
-`wrangler.jsonc` se genera localmente y queda ignorado por Git para evitar
-subir por accidente identificadores de la cuenta.
+El repositorio debe tener esta carpeta como raíz. Netlify detecta Next.js y usa
+su adaptador oficial automáticamente; `netlify.toml` fija el build en
+`npm run build`, la salida en `.next` y Node.js 22.
 
-1. Inicia sesión y crea los recursos:
+1. Sube el repositorio a GitHub.
+2. En Netlify, elige **Add new project → Import an existing project** y conecta
+   ese repositorio.
+3. Antes de publicar, crea estas variables en
+   **Project configuration → Environment variables**:
 
-   ```bash
-   npx wrangler login
-   npx wrangler d1 create predicciones-velada-vi
-   npx wrangler r2 bucket create predicciones-velada-vi-outfit-photos
-   ```
+   - `APP_DATA_CONTEXT`: usa `production` para la web pública. Evita que una prueba futura mezcle datos con el evento real.
+   - `ADMIN_PIN`: código privado del panel.
+   - `OUTFIT_VOTE_SECRET`: cadena aleatoria privada de al menos 24 caracteres.
 
-2. Copia el UUID real que devuelve D1 y genera la configuración:
+4. Publica el proyecto. Los almacenes de Netlify Blobs se aprovisionan desde la
+   aplicación y permanecen disponibles entre nuevos despliegues.
 
-   ```bash
-   npm run cf:config -- --database-id <UUID_REAL_DE_D1>
-   ```
-
-   Si se usan otros nombres, añade `--database-name <nombre>` y
-   `--bucket-name <nombre>`.
-
-3. Aplica el esquema y comprueba el paquete sin publicarlo:
-
-   ```bash
-   npx wrangler d1 migrations apply predicciones-velada-vi --remote --config wrangler.jsonc
-   npm run cf:check
-   ```
-
-4. Publica y carga los dos secretos; Wrangler pide cada valor sin guardarlo en
-   el repositorio:
-
-   ```bash
-   npm run cf:deploy
-   npx wrangler secret put ADMIN_PIN --config wrangler.jsonc
-   npx wrangler secret put OUTFIT_VOTE_SECRET --config wrangler.jsonc
-   ```
-
-El Worker queda disponible en el dominio público `*.workers.dev`. Los archivos
-estáticos y retratos se sirven mediante `ASSETS`, los datos mediante `DB` (D1)
-y las fotos de outfits mediante `OUTFIT_PHOTOS` (R2).
+No configures una exportación estática ni una redirección SPA a `index.html`:
+la aplicación necesita los Route Handlers de Next.js para guardar
+predicciones, votos y fotografías.

@@ -1,12 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // All event portraits and branding are already sized web assets. Serving
-  // them directly keeps the public Worker independent from the optional
-  // Cloudflare Images paid binding.
+  // Portraits, branding, and uploaded outfit photos are already prepared for
+  // the web. Serving them directly also keeps dynamic photo routes portable.
   images: {
     unoptimized: true,
   },
+  poweredByHeader: false,
 };
 
 export default nextConfig;

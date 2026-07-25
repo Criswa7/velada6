@@ -1,33 +1,10 @@
-import {
-  ensureSchema,
-  getD1,
-  getParticipantByToken,
-  getSettings,
-  isLocked,
-} from "@/app/lib/db";
+import { AppStateError, savePredictions } from "@/app/lib/db";
 import { winnerIsValid } from "@/app/lib/event";
 
 export const dynamic = "force-dynamic";
 
 export async function PUT(request: Request) {
   try {
-    await ensureSchema();
-    const participant = await getParticipantByToken(
-      request.headers.get("x-edit-token"),
-    );
-    if (!participant) {
-      return Response.json(
-        { error: "Este dispositivo no tiene una sesión válida." },
-        { status: 401 },
-      );
-    }
-    if (isLocked(await getSettings())) {
-      return Response.json(
-        { error: "El tiempo terminó: tus predicciones están en solo lectura." },
-        { status: 423 },
-      );
-    }
-
     const payload = (await request.json()) as {
       picks?: Record<string, string>;
     };
@@ -38,7 +15,6 @@ export async function PUT(request: Request) {
         { status: 400 },
       );
     }
-
     const normalized = entries.map(([fightIdValue, winnerSlug]) => {
       const fightId = Number(fightIdValue);
       if (
@@ -50,22 +26,9 @@ export async function PUT(request: Request) {
       }
       return { fightId, winnerSlug };
     });
-
-    const now = new Date().toISOString();
-    await getD1().batch(
-      normalized.map(({ fightId, winnerSlug }) =>
-        getD1()
-          .prepare(
-            `INSERT INTO predictions (participant_id, fight_id, winner_slug, updated_at)
-             VALUES (?, ?, ?, ?)
-             ON CONFLICT(participant_id, fight_id)
-             DO UPDATE SET winner_slug = excluded.winner_slug, updated_at = excluded.updated_at`,
-          )
-          .bind(participant.id, fightId, winnerSlug, now),
-      ),
+    return Response.json(
+      await savePredictions(request.headers.get("x-edit-token"), normalized),
     );
-
-    return Response.json({ savedCount: normalized.length, savedAt: now });
   } catch (error) {
     if (error instanceof Error && error.message === "INVALID_PICK") {
       return Response.json(
@@ -73,8 +36,10 @@ export async function PUT(request: Request) {
         { status: 400 },
       );
     }
-    const message =
-      error instanceof Error ? error.message : "No fue posible guardar.";
+    if (error instanceof AppStateError) {
+      return Response.json({ error: error.message }, { status: error.status });
+    }
+    const message = error instanceof Error ? error.message : "No fue posible guardar.";
     return Response.json({ error: message }, { status: 500 });
   }
 }
