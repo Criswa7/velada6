@@ -1,0 +1,154 @@
+diff --git a/app/api/outfit/photo/route.ts b/app/api/outfit/photo/route.ts
+--- a/app/api/outfit/photo/route.ts
++++ b/app/api/outfit/photo/route.ts
+@@ -1,6 +1,13 @@
+ import { AppStateError, getOutfitPhoto } from "@/app/lib/db";
+
+ export const dynamic = "force-dynamic";
++
++const PHOTO_RESPONSE_HEADERS = {
++  "Cache-Control": "no-store, max-age=0",
++  "CDN-Cache-Control": "no-store",
++  "Netlify-CDN-Cache-Control": "no-store",
++  "Netlify-Vary": "query=participantId|v|cacheVersion",
++};
+
+ export async function GET(request: Request) {
+   try {
+@@ -9,13 +16,13 @@
+     if (!participantId || participantId.length > 64) {
+       return Response.json(
+         { error: "La foto solicitada no es válida." },
+-        { status: 400, headers: { "Cache-Control": "no-store" } },
++        { status: 400, headers: PHOTO_RESPONSE_HEADERS },
+       );
+     }
+     const photo = await getOutfitPhoto(participantId);
+     const headers = new Headers({
++      ...PHOTO_RESPONSE_HEADERS,
+       "Content-Type": photo.row.content_type,
+-      "Cache-Control": "public, max-age=86400, immutable",
+       "X-Content-Type-Options": "nosniff",
+     });
+     if (photo.etag) headers.set("ETag", photo.etag);
+@@ -32,7 +39,7 @@
+     const status = error instanceof AppStateError ? error.status : 500;
+     return Response.json(
+       { error: message },
+-      { status, headers: { "Cache-Control": "no-store" } },
++      { status, headers: PHOTO_RESPONSE_HEADERS },
+     );
+   }
+ }
+
+diff --git a/app/lib/state.ts b/app/lib/state.ts
+--- a/app/lib/state.ts
++++ b/app/lib/state.ts
+@@ -18,7 +18,13 @@
+   updated_at: string;
+   vote_count: number;
+ };
++const OUTFIT_PHOTO_CACHE_VERSION = "2";
++
+ function photoUrl(participantId: string, updatedAt: string): string {
+-  const query = new URLSearchParams({ participantId, v: updatedAt });
++  const query = new URLSearchParams({
++    participantId,
++    v: updatedAt,
++    cacheVersion: OUTFIT_PHOTO_CACHE_VERSION,
++  });
+   return `/api/outfit/photo?${query.toString()}`;
+ }
+
+diff --git a/app/admin/OutfitAdmin.tsx b/app/admin/OutfitAdmin.tsx
+--- a/app/admin/OutfitAdmin.tsx
++++ b/app/admin/OutfitAdmin.tsx
+@@ -249,18 +249,38 @@
+               La galería está congelada. Los invitados ya pueden votar desde la
+               tercera pestaña de la app.
+             </p>
+-            <button
+-              type="button"
+-              className="danger-button"
+-              onClick={() =>
+-                void onAction(
+-                  { action: "setOutfitStatus", status: "closed" },
+-                  "Votación cerrada y resultado publicado.",
+-                )
+-              }
+-            >
+-              Cerrar y publicar resultado
+-            </button>
++            <div>
++              <button
++                type="button"
++                className="secondary-button"
++                onClick={() => {
++                  if (
++                    window.confirm(
++                      "¿Volver al modo de preparación para cambiar las fotos?",
++                    )
++                  ) {
++                    void onAction(
++                      { action: "setOutfitStatus", status: "draft" },
++                      "Galería reabierta para subir o cambiar fotos.",
++                    );
++                  }
++                }}
++              >
++                Volver a preparar fotos
++              </button>
++              <button
++                type="button"
++                className="danger-button"
++                onClick={() =>
++                  void onAction(
++                    { action: "setOutfitStatus", status: "closed" },
++                    "Votación cerrada y resultado publicado.",
++                  )
++                }
++              >
++                Cerrar y publicar resultado
++              </button>
++            </div>
+           </>
+         ) : null}
+         {outfit.status === "closed" ? (
+
+diff --git a/tests/rendered-html.test.mjs b/tests/rendered-html.test.mjs
+--- a/tests/rendered-html.test.mjs
++++ b/tests/rendered-html.test.mjs
+@@ -73,6 +73,7 @@
+   assert.match(outfitSource, /TU OUTFIT · NO ELEGIBLE/);
+   assert.match(outfitSource, /candidateParticipantId/);
+   assert.match(adminSource, /Abrir votación/);
++  assert.match(adminSource, /Volver a preparar fotos/);
+   assert.match(adminSource, /capture="environment"/);
+   assert.match(schemaSource, /outfit/i);
+   assert.match(voteRoute, /candidateParticipantId/);
+@@ -80,3 +81,25 @@
+   assert.match(css, /\.event-logo\s*\{[^}]*height:\s*auto/s);
+   assert.doesNotMatch(css, /\.event-logo\s*\{[^}]*object-fit:\s*fill/s);
+ });
++
++test("serves each outfit photo without a shared CDN cache entry", async () => {
++  const [photoRoute, stateSource] = await Promise.all([
++    readFile(
++      new URL("../app/api/outfit/photo/route.ts", import.meta.url),
++      "utf8",
++    ),
++    readFile(new URL("../app/lib/state.ts", import.meta.url), "utf8"),
++  ]);
++
++  assert.match(
++    photoRoute,
++    /"Netlify-CDN-Cache-Control":\s*"no-store"/,
++  );
++  assert.match(
++    photoRoute,
++    /"Netlify-Vary":\s*"query=participantId\|v\|cacheVersion"/,
++  );
++  assert.doesNotMatch(photoRoute, /max-age=86400,\s*immutable/);
++  assert.match(stateSource, /OUTFIT_PHOTO_CACHE_VERSION\s*=\s*"2"/);
++  assert.match(stateSource, /cacheVersion:\s*OUTFIT_PHOTO_CACHE_VERSION/);
++});
